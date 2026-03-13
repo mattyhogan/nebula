@@ -1,13 +1,15 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import { ui, runAction } from '../output.js';
+import { getServerUrl } from '../util.js';
 
 export function registerStatusCommand(program: Command) {
     program
         .command('status')
         .description('Show nebula service status and enabled features')
-        .option('-u, --url <url>', 'Server URL', 'http://localhost:4747')
+        .option('-u, --url <url>', 'Server URL')
         .action(runAction(async (opts) => {
+            opts.url = opts.url || getServerUrl();
             ui.heading(ui.brand('nebula') + ' status');
 
             let serverUp = false;

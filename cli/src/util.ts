@@ -5,20 +5,31 @@ import os from 'os';
 const CONFIG_DIR = join(os.homedir(), '.nebula');
 const CONFIG_FILE = join(CONFIG_DIR, 'config.json');
 
+export const DEFAULT_URL = 'http://localhost:4747';
+
+export interface NebulaConfig {
+    projectRoot?: string;
+    serverUrl?: string;
+}
+
+export function loadConfig(): NebulaConfig {
+    try { return JSON.parse(readFileSync(CONFIG_FILE, 'utf-8')); } catch { return {}; }
+}
+
+export function saveConfig(config: NebulaConfig) {
+    mkdirSync(CONFIG_DIR, { recursive: true });
+    writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2) + '\n');
+}
+
+export function getServerUrl(): string {
+    return loadConfig().serverUrl || DEFAULT_URL;
+}
+
 export async function nebulaFetch(url: string, init?: RequestInit): Promise<Response> {
     if (url.startsWith('https://')) {
         process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
     }
     return fetch(url, init);
-}
-
-function loadConfig(): Record<string, string> {
-    try { return JSON.parse(readFileSync(CONFIG_FILE, 'utf-8')); } catch { return {}; }
-}
-
-function saveConfig(config: Record<string, string>) {
-    mkdirSync(CONFIG_DIR, { recursive: true });
-    writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2) + '\n');
 }
 
 function isNebulaRoot(dir: string): boolean {
@@ -62,7 +73,7 @@ export function findComposeFile(): string {
     const root = findProjectRoot();
     const path = join(root, 'docker-compose.yml');
     if (!existsSync(path)) {
-        throw new Error('docker-compose.yml not found. Run this from the nebula project directory or run once from the project root to save the location.');
+        throw new Error('project not found. Run `nebula init` to set up.');
     }
     return path;
 }

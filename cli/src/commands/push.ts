@@ -1,18 +1,19 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import { ui, runAction } from '../output.js';
-import { nebulaFetch } from '../util.js';
+import { nebulaFetch, getServerUrl } from '../util.js';
 
 export function registerPushCommand(program: Command) {
     program
         .command('push')
         .description('Push test metrics to the dashboard')
-        .option('-u, --url <url>', 'Server URL', 'http://localhost:4747')
+        .option('-u, --url <url>', 'Server URL')
         .option('-s, --service <id>', 'Service ID', 'test')
         .option('-n, --name <name>', 'Service display name', 'Test Service')
         .option('--status <status>', 'Service status (healthy, degraded, down)', 'healthy')
         .option('--watch', 'Push continuously every 2s with random data')
         .action(runAction(async (opts) => {
+            opts.url = opts.url || getServerUrl();
             const payload = () => ({
                 service: {
                     id: opts.service,

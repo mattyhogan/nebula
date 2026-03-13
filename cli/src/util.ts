@@ -8,6 +8,7 @@ const CONFIG_FILE = join(CONFIG_DIR, 'config.json');
 export const DEFAULT_URL = 'http://localhost:4747';
 
 export interface NebulaConfig {
+    mode?: 'local' | 'remote';
     projectRoot?: string;
     serverUrl?: string;
 }
@@ -37,20 +38,18 @@ function isNebulaRoot(dir: string): boolean {
 }
 
 export function findProjectRoot(): string {
+    const config = loadConfig();
+
+    if (config.projectRoot && isNebulaRoot(config.projectRoot)) {
+        return config.projectRoot;
+    }
+
     let dir = process.cwd();
     for (let i = 0; i < 10; i++) {
-        if (isNebulaRoot(dir)) {
-            saveConfig({ ...loadConfig(), projectRoot: dir });
-            return dir;
-        }
+        if (isNebulaRoot(dir)) return dir;
         const parent = resolve(dir, '..');
         if (parent === dir) break;
         dir = parent;
-    }
-
-    const config = loadConfig();
-    if (config.projectRoot && isNebulaRoot(config.projectRoot)) {
-        return config.projectRoot;
     }
 
     const home = os.homedir();
@@ -60,10 +59,7 @@ export function findProjectRoot(): string {
         join(home, 'nebula'),
     ];
     for (const c of candidates) {
-        if (isNebulaRoot(c)) {
-            saveConfig({ ...loadConfig(), projectRoot: c });
-            return c;
-        }
+        if (isNebulaRoot(c)) return c;
     }
 
     return process.cwd();
@@ -71,6 +67,9 @@ export function findProjectRoot(): string {
 
 export function requireLocal() {
     const config = loadConfig();
+    if (config.mode === 'remote') {
+        throw new Error('this command requires a local setup. You are connected to a remote instance. Run `nebula init` again to switch to local mode.');
+    }
     if (!config.projectRoot) {
         throw new Error('this command requires a local setup. Run `nebula init` and choose option 2.');
     }

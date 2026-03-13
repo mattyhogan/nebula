@@ -66,7 +66,7 @@ async function setupRemote() {
         ui.warn('could not reach server, saving URL anyway');
     }
 
-    saveConfig({ ...loadConfig(), serverUrl });
+    saveConfig({ mode: 'remote', serverUrl });
     ui.blank();
     ui.success(`saved server URL: ${ui.cyan(serverUrl)}`);
     ui.info(`run ${ui.cyan('nebula status')} to check your dashboard`);
@@ -103,7 +103,7 @@ async function setupLocal() {
         ui.info('.env already exists');
     }
 
-    saveConfig({ ...loadConfig(), projectRoot, serverUrl: 'http://localhost:4747' });
+    saveConfig({ mode: 'local', projectRoot, serverUrl: 'http://localhost:4747' });
     ui.blank();
     ui.success('setup complete!');
     ui.blank();

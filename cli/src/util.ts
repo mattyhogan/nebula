@@ -69,6 +69,13 @@ export function findProjectRoot(): string {
     return process.cwd();
 }
 
+export function requireLocal() {
+    const config = loadConfig();
+    if (!config.projectRoot) {
+        throw new Error('this command requires a local setup. Run `nebula init` and choose option 2.');
+    }
+}
+
 export function findComposeFile(): string {
     const root = findProjectRoot();
     const path = join(root, 'docker-compose.yml');

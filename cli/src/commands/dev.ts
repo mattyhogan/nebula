@@ -1,14 +1,15 @@
 import { Command } from 'commander';
 import { spawn } from 'child_process';
 import { ui, runAction } from '../output.js';
-import { findProjectRoot } from '../util.js';
+import { findProjectRoot, requireLocal } from '../util.js';
 
 export function registerDevCommand(program: Command) {
     program
         .command('dev')
-        .description('Start frontend dev server + backend')
+        .description('Start frontend dev server + backend (local only)')
         .option('-p, --port <port>', 'Frontend dev port', '5173')
         .action(runAction(async (opts) => {
+            requireLocal();
             const root = findProjectRoot();
 
             ui.heading(`Starting ${ui.brand('nebula')} dev mode`);

@@ -1,15 +1,16 @@
 import { Command } from 'commander';
 import { execSync } from 'child_process';
 import { ui, runAction } from '../output.js';
-import { findComposeFile } from '../util.js';
+import { findComposeFile, requireLocal } from '../util.js';
 
 export function registerStartCommand(program: Command) {
     program
         .command('start')
-        .description('Start nebula services')
+        .description('Start nebula services (local only)')
         .option('-d, --detach', 'Run in background', true)
         .option('--build', 'Rebuild images before starting')
         .action(runAction(async (opts) => {
+            requireLocal();
             const compose = findComposeFile();
             const flags = ['-f', compose];
             if (opts.build) flags.push('--build');

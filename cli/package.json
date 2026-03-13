@@ -1,0 +1,12 @@
+{
+  "name": "nebula-cli",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "nebula": "./src/index.ts"
+  },
+  "dependencies": {
+    "chalk": "^5.4.1",
+    "commander": "^12.1.0"
+  }
+}

@@ -1,0 +1,72 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-binaries:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify tag matches package.json
+        run: |
+          TAG_VERSION=${GITHUB_REF#refs/tags/v}
+          PKG_VERSION=$(node -p "require('./cli/package.json').version")
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "Error: Tag v$TAG_VERSION doesn't match cli/package.json version $PKG_VERSION"
+            exit 1
+          fi
+          echo "VERSION=$PKG_VERSION" >> $GITHUB_ENV
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: cd cli && bun install
+
+      - name: Build binaries
+        run: |
+          mkdir -p dist/binaries
+          cd cli
+          bun build --compile --target=bun-linux-x64 --define "process.env.NEBULA_VERSION='$VERSION'" src/index.ts --outfile ../dist/binaries/nebula-linux-x64
+          bun build --compile --target=bun-linux-arm64 --define "process.env.NEBULA_VERSION='$VERSION'" src/index.ts --outfile ../dist/binaries/nebula-linux-arm64
+          bun build --compile --target=bun-darwin-x64 --define "process.env.NEBULA_VERSION='$VERSION'" src/index.ts --outfile ../dist/binaries/nebula-darwin-x64
+          bun build --compile --target=bun-darwin-arm64 --define "process.env.NEBULA_VERSION='$VERSION'" src/index.ts --outfile ../dist/binaries/nebula-darwin-arm64
+
+      - name: Create checksums
+        run: |
+          cd dist/binaries
+          sha256sum nebula-* > checksums.txt
+
+      - name: Upload binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries
+          path: dist/binaries/
+
+  create-release:
+    needs: [build-binaries]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: binaries
+          path: binaries/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            binaries/nebula-linux-x64
+            binaries/nebula-linux-arm64
+            binaries/nebula-darwin-x64
+            binaries/nebula-darwin-arm64
+            binaries/checksums.txt
+          generate_release_notes: true

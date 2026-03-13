@@ -1,0 +1,9 @@
+{
+  "name": "nebula-collectors",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@luxdb/flux": "^0.3.0",
+    "zod": "^4.3.6"
+  }
+}

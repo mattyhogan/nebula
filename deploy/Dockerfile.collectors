@@ -1,0 +1,12 @@
+FROM oven/bun:1-alpine
+
+WORKDIR /app
+
+COPY collectors/package.json collectors/bun.lock* ./
+RUN bun install
+
+COPY collectors/ ./
+
+ENV LUX_URL=lux://lux:6379
+
+CMD ["sh", "-c", "bun run collector.ts & bun run network-collector.ts & wait"]

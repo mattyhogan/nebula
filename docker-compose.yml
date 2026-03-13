@@ -1,0 +1,19 @@
+services:
+  lux:
+    image: ghcr.io/mattyhogan/lux:latest
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  server:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.server
+    ports:
+      - "${PORT:-4747}:${PORT:-4747}"
+    env_file: .env
+    volumes:
+      - ${PHOTOS_DIR:-./photos}:/data/photos:ro
+    depends_on:
+      - lux
+    restart: unless-stopped

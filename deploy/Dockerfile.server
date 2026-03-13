@@ -1,0 +1,20 @@
+FROM oven/bun:1-alpine
+
+RUN apk add --no-cache util-linux
+
+WORKDIR /app
+
+COPY server/package.json ./
+RUN bun install
+
+COPY server/src/ ./src/
+COPY frontend/build/ ./public/
+
+ENV STATIC_DIR=/app/public
+ENV LUX_HOST=lux
+ENV LUX_PORT=6379
+ENV PORT=4747
+
+EXPOSE 4747
+
+CMD ["bun", "run", "src/index.ts"]

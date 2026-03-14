@@ -129,7 +129,7 @@ const server = Bun.serve({
         const url = new URL(req.url);
         const path = url.pathname.replace(/\/$/, '') || '/';
 
-        if (path === '/terminal') {
+        if (path === '/terminal' && req.headers.get('upgrade') === 'websocket') {
             const upgraded = server.upgrade(req);
             if (upgraded) return undefined as any;
             return new Response('WebSocket upgrade failed', { status: 400 });
@@ -186,7 +186,7 @@ const server = Bun.serve({
         const networkRes = await handleNetwork(req, path);
         if (networkRes) return corsify(networkRes);
 
-        if (KIOSK_API && ['/status', '/start', '/stop', '/restart', '/zoom', '/favorites'].some(p => path === p || path.startsWith(p + '/'))) {
+        if (KIOSK_API && ['/status', '/start', '/stop', '/restart', '/terminal', '/zoom', '/favorites'].some(p => path === p || path.startsWith(p + '/'))) {
             try {
                 const target = `${KIOSK_API}${path}`;
                 const proxyRes = await fetch(target, {

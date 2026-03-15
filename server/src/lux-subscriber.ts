@@ -6,20 +6,29 @@ export class LuxBufSubscriber {
     private socket: Socket | null = null;
     private host: string;
     private port: number;
+    private password: string;
     private connected = false;
     private buf = Buffer.alloc(0);
     private listeners = new Map<string, Set<Callback>>();
 
-    constructor(config: { host: string; port: number }) {
+    constructor(config: { host: string; port: number; password?: string }) {
         this.host = config.host;
         this.port = config.port;
+        this.password = config.password || '';
     }
 
     async connect(): Promise<void> {
         if (this.connected) return;
         return new Promise((resolve, reject) => {
             this.socket = new Socket();
-            this.socket.on('connect', () => { this.connected = true; resolve(); });
+            this.socket.on('connect', () => {
+                this.connected = true;
+                if (this.password) {
+                    const cmd = `*2\r\n$4\r\nAUTH\r\n$${Buffer.byteLength(this.password)}\r\n${this.password}\r\n`;
+                    this.socket!.write(cmd);
+                }
+                resolve();
+            });
             this.socket.on('data', (chunk: Buffer) => {
                 this.buf = Buffer.concat([this.buf, chunk]);
                 this.drain();

@@ -8,8 +8,9 @@
     "monitor": "bun run src/monitor.ts"
   },
   "dependencies": {
-    "@luxdb/sdk": "^0.2.0",
     "@luxdb/flux": "^0.3.0",
+    "@luxdb/sdk": "^0.2.0",
+    "ioredis": "^5.10.0",
     "marked": "^15.0.0"
   }
 }

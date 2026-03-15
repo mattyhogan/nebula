@@ -19,6 +19,7 @@ import { terminalWebSocket } from './routes/terminal.js';
 const PORT = parseInt(process.env.PORT || '4747');
 const LUX_HOST = process.env.LUX_HOST || '127.0.0.1';
 const LUX_PORT = parseInt(process.env.LUX_PORT || '6379');
+const LUX_PASSWORD = process.env.LUX_PASSWORD || '';
 const MINI_HOST = process.env.MINI_HOST || '';
 const BASE_PATH = process.env.NEBULA_BASE_PATH || '';
 const KIOSK_API = process.env.KIOSK_API || '';
@@ -78,27 +79,30 @@ function corsify(res: Response): Response {
 
 const luxOpts = { host: LUX_HOST, port: LUX_PORT };
 
-const luxWrite = new Lux(luxOpts);
-await luxWrite.connect();
+async function connectLux(opts: typeof luxOpts): Promise<Lux> {
+    const client = new Lux(opts);
+    await client.connect();
+    if (LUX_PASSWORD) await (client as any).send(['AUTH', LUX_PASSWORD]);
+    return client;
+}
 
-const luxRead = new Lux(luxOpts);
-await luxRead.connect();
-
-const luxSSE = new Lux(luxOpts);
-await luxSSE.connect();
+const luxWrite = await connectLux(luxOpts);
+const luxRead = await connectLux(luxOpts);
+const luxSSE = await connectLux(luxOpts);
 
 console.log(`connected to lux at ${LUX_HOST}:${LUX_PORT}`);
 
 const sub = luxSSE.createSubscriber();
 await sub.connect();
+if (LUX_PASSWORD) await (sub as any).send(['AUTH', LUX_PASSWORD]);
 initMetricsSSE(luxSSE, sub);
 startHistoryWriter(luxRead, luxWrite);
 
-const flux = new Flux({ url: LUX_URL, name: 'nebula-server' });
+const flux = new Flux({ url: LUX_PASSWORD ? `lux://:${LUX_PASSWORD}@${LUX_HOST}:${LUX_PORT}` : LUX_URL, name: 'nebula-server' });
 await flux.start();
 await flux.join('metrics');
 
-const fluxSub = new LuxBufSubscriber({ host: LUX_HOST, port: LUX_PORT });
+const fluxSub = new LuxBufSubscriber({ host: LUX_HOST, port: LUX_PORT, password: LUX_PASSWORD });
 await fluxSub.connect();
 
 const fluxPeerId = (flux as any).id;
